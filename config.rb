@@ -14,8 +14,8 @@ page '/*.json', layout: false
 page '/*.txt', layout: false
 
 # locale
-page "/zh/*", layout: "layout"
-page "/en/*", layout: "layout.en"
+# page "/zh/*", layout: "layout"
+# page "/en/*", layout: "layout.en"
 
 # With alternative layout
 # page '/path/to/file.html', layout: 'other_layout'
@@ -36,9 +36,6 @@ page "/en/*", layout: "layout.en"
 #  proxy "/en/posts/#{post.slug}.html", "localizable/post_detail.en.html", :locals => { :post => post }
 #end
 
-ignore '/zh/post_detail.html'
-ignore '/en/post_detail.html'
-
 # Helpers
 # Methods defined in the helpers block are available in templates
 # https://middlemanapp.com/basics/helper-methods/
@@ -54,7 +51,7 @@ end
 # https://middlemanapp.com/advanced/configuration/#environment-specific-settings
 
 # Localization
-activate :i18n, :path => "/:locale/", :mount_at_root => false
+# activate :i18n, :path => "/:locale/", :mount_at_root => false
 
 
 # Asset pipeline

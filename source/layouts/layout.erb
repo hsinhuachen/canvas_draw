@@ -20,14 +20,221 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Lato&display=swap" rel="stylesheet">
     <%= stylesheet_link_tag :app %>
-    <%= javascript_include_tag :app %>
+    <script src="/javascripts/jquery-1.12.4.min.js"></script>
   </head>
-  <body class="zh-tw lang-zh">
-    <%= partial "nav" %>
-    <%= partial "header" %>
-    <main id="main">
-      <%= yield %>
-    </main>
-    <%= partial "footer" %>
+  <style>
+    body{
+      height:1500px;
+      padding: 0 15px 100px 15px;
+    }
+    .wrapper{
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      margin-top: 20px;
+    }
+
+    .canvas-wrap{
+      position: relative;
+      background: url('/imgs/44-1920x1080.jpg') no-repeat center center;
+      background-size: contain;
+      height: 400px;
+    }
+
+    #mycanvas{
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      width: 100%;
+      height: 400px;
+      margin: 0 auto;
+      border: 5px solid #000000;
+    }
+
+    .control{
+      padding-top: 20px;
+    }
+
+    .control button{
+      margin-right: 5px;
+    }
+
+    #image{
+    }
+
+    #image img{
+      width: 100%;
+      height: auto;
+    }
+  </style>
+  <body>
+    <div class="wrapper">
+      <div class="canvas-wrap">
+        <canvas id="mycanvas" width="600" height="400"></canvas>
+      </div>
+      <div class="control">
+        <button id="draw">畫筆</button>
+        <button id="eraser">橡皮擦</button>
+        <button id="convertToImage">轉圖</button>
+        <button id="clear">清除</button>
+      </div>
+      <div id="image"></div>
+    </div> <!-- /wrapper -->
   </body>
+  <script>
+  // init canvas element
+var canvas = document.getElementById('mycanvas')
+var ctx = canvas.getContext("2d")
+var bErasing = false;
+setCanvasW();
+
+$(window).resize(function(){
+  setCanvasW();
+})
+
+// load image
+// var defimg = new Image(); 
+// defimg.addEventListener("load", function() {
+//   ctx.drawImage(defimg,0,0,$(".wrapper").width(),$(".wrapper").height());
+// }, false);
+// defimg.src = '/imgs/44-1920x1080.jpg'; 
+
+// 抗鋸齒
+// ref: https://www.zhihu.com/question/37698502
+let width = canvas.width,
+    height = canvas.height;
+if (window.devicePixelRatio) {
+  canvas.style.width = width + "px";
+  canvas.style.height = height + "px";
+  canvas.height = height * window.devicePixelRatio;
+  canvas.width = width * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+}
+
+// mouse
+function getMousePos(canvas, evt) {
+  var rect = canvas.getBoundingClientRect();
+  return {
+    x: evt.clientX - rect.left,
+    y: evt.clientY - rect.top
+  };
+}
+
+function mouseMove(evt) {
+  var mousePos = getMousePos(canvas, evt);
+  ctx.lineCap = "round";
+  ctx.lineJoin="round";
+  ctx.shadowBlur = 1; // 邊緣模糊，防止直線邊緣出現鋸齒 
+  // ctx.shadowColor = 'black';
+
+  if(bErasing == true){
+    ctx.lineWidth = 40;
+    ctx.globalCompositeOperation="destination-out";
+  }else{
+    ctx.strokeStyle = "#ff0000";
+    ctx.lineWidth = 2;
+    ctx.globalCompositeOperation="source-over";
+  }
+  ctx.lineTo(mousePos.x, mousePos.y);
+  ctx.stroke();
+}
+
+canvas.addEventListener('mousedown', function(evt) {
+  var mousePos = getMousePos(canvas, evt);
+  ctx.beginPath();
+  ctx.moveTo(mousePos.x, mousePos.y);
+  evt.preventDefault();
+  canvas.addEventListener('mousemove', mouseMove, false);
+});
+
+canvas.addEventListener('mouseup', function() {
+  canvas.removeEventListener('mousemove', mouseMove, false);
+}, false);
+
+
+// touch
+function getTouchPos(canvas, evt) {
+  var rect = canvas.getBoundingClientRect();
+  return {
+    x: evt.touches[0].clientX - rect.left,
+    y: evt.touches[0].clientY - rect.top
+  };
+}
+
+// for mobile
+function touchMove(evt) {
+  var touchPos = getTouchPos(canvas, evt);
+  // console.log(touchPos.x, touchPos.y)
+  
+  ctx.lineCap = "round";
+  ctx.lineJoin="round";
+  ctx.shadowBlur = 1;
+  //ctx.shadowColor = 'black';
+
+  if(bErasing == true){
+    ctx.lineWidth = 40;
+    ctx.globalCompositeOperation="destination-out";
+  }else{
+    ctx.strokeStyle = "#ff0000";
+    ctx.lineWidth = 2;
+    ctx.globalCompositeOperation="source-over";
+  }
+
+  ctx.lineTo(touchPos.x, touchPos.y);
+  ctx.stroke();
+}
+
+canvas.addEventListener('touchstart', function(evt) {
+  // console.log('touchstart')
+  // console.log(evt)
+  var touchPos = getTouchPos(canvas, evt);
+  ctx.beginPath(touchPos.x, touchPos.y);
+  ctx.moveTo(touchPos.x, touchPos.y);
+  evt.preventDefault();
+  canvas.addEventListener('touchmove', touchMove, false);
+});
+
+canvas.addEventListener('touchend', function() {
+  // console.log("touchend")
+  canvas.removeEventListener('touchmove', touchMove, false);
+}, false);
+
+
+document.getElementById('draw').addEventListener('click', function() {
+  bErasing = false;
+}, false);
+
+// clear
+document.getElementById('eraser').addEventListener('click', function() {
+  bErasing = true;
+}, false);
+
+document.getElementById('clear').addEventListener('click', function() {
+  // console.log("reset")
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}, false);
+
+// convertToImage
+document.getElementById('convertToImage').addEventListener('click', function() { 
+  // console.log("convertToImage") 
+
+  var defimg = new Image(); 
+  defimg.addEventListener("load", function() {
+    ctx.globalCompositeOperation = "destination-over";
+    ctx.drawImage(defimg,0,0,$(".wrapper").width(),$(".wrapper").height());
+
+    var image = canvas.toDataURL("image/png"); 
+    $('#image').html("<img src='" + image + "' alt='from canvas'/>");
+  }, false);
+  defimg.src = '/imgs/44-1920x1080.jpg'; 
+}, false);
+
+function setCanvasW(){
+  canvas.width = $(".wrapper").width();
+}
+
+
+  </script>
 </html>
